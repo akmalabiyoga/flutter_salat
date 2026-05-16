@@ -48,6 +48,7 @@ dependencies:
   flutter_local_notifications: ^21.0.0
   timezone: ^0.11.0
   tray_manager: ^0.5.2
+  home_widget: ^0.9.1
 
 dev_dependencies:
   flutter_test:
