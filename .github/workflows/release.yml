@@ -21,7 +21,7 @@ jobs:
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libayatana-indicator3-dev libayatana-ido3-0.4-dev ninja-build
           
       - name: Build Linux
         run: flutter build linux --release
@@ -32,12 +32,10 @@ jobs:
           cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
           cp assets/app_icon.png build/linux/x64/release/bundle/app_icon.png
           
-          # Find and bundle libayatana and libdbusmenu
+          # Bulk bundle libraries
           mkdir -p build/linux/x64/release/bundle/lib
-          cp /usr/lib/x86_64-linux-gnu/libayatana-appindicator3.so.1 build/linux/x64/release/bundle/lib/ || true
-          cp /usr/lib/x86_64-linux-gnu/libayatana-indicator3.so.7 build/linux/x64/release/bundle/lib/ || true
-          cp /usr/lib/x86_64-linux-gnu/libdbusmenu-gtk3.so.4 build/linux/x64/release/bundle/lib/ || true
-          cp /usr/lib/x86_64-linux-gnu/libdbusmenu-glib.so.4 build/linux/x64/release/bundle/lib/ || true
+          cp /usr/lib/x86_64-linux-gnu/libayatana* build/linux/x64/release/bundle/lib/ || true
+          cp /usr/lib/x86_64-linux-gnu/libdbusmenu* build/linux/x64/release/bundle/lib/ || true
           
           # Create wrapper script for LD_LIBRARY_PATH
           printf '#!/bin/bash\nSCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nexport LD_LIBRARY_PATH="$SCRIPT_DIR/lib:$LD_LIBRARY_PATH"\nexec "$SCRIPT_DIR/flutter_salat" "$@"\n' > build/linux/x64/release/bundle/run_app.sh
