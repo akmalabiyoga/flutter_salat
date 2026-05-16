@@ -38,6 +38,10 @@ jobs:
           cp /usr/lib/x86_64-linux-gnu/libdbusmenu-gtk3.so.4 build/linux/x64/release/bundle/lib/ || true
           cp /usr/lib/x86_64-linux-gnu/libdbusmenu-glib.so.4 build/linux/x64/release/bundle/lib/ || true
           
+          # Create wrapper script for LD_LIBRARY_PATH
+          printf '#!/bin/bash\nSCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nexport LD_LIBRARY_PATH="$SCRIPT_DIR/lib:$LD_LIBRARY_PATH"\nexec "$SCRIPT_DIR/flutter_salat" "$@"\n' > build/linux/x64/release/bundle/run_app.sh
+          chmod +x build/linux/x64/release/bundle/run_app.sh
+          
           cd build/linux/x64/release/bundle
           tar -czvf $GITHUB_WORKSPACE/flutter_salat_linux.tar.gz .
           
