@@ -1,11 +1,11 @@
-class JadwalData {
+class PrayerTime {
   final String prayerDate;
   final String prayerTime;
   final String prayerName;
   final String kabupatenKotaName;
   final String provinsiName;
 
-  JadwalData({
+  PrayerTime({
     required this.prayerDate,
     required this.prayerTime,
     required this.prayerName,
@@ -13,8 +13,8 @@ class JadwalData {
     required this.provinsiName,
   });
 
-  factory JadwalData.fromJson(Map<String, dynamic> json) {
-    return JadwalData(
+  factory PrayerTime.fromJson(Map<String, dynamic> json) {
+    return PrayerTime(
       prayerDate: json['prayer_date'] ?? '',
       prayerTime: json['prayer_time'] ?? '',
       prayerName: json['prayer_name'] ?? '',
@@ -27,7 +27,7 @@ class JadwalData {
 class JadwalResponse {
   final int status;
   final String message;
-  final List<JadwalData> data;
+  final List<PrayerTime> data;
 
   JadwalResponse({
     required this.status,
@@ -37,7 +37,7 @@ class JadwalResponse {
 
   factory JadwalResponse.fromJson(Map<String, dynamic> json) {
     var dataList = json['data'] as List? ?? [];
-    List<JadwalData> data = dataList.map((i) => JadwalData.fromJson(i)).toList();
+    List<PrayerTime> data = dataList.map((i) => PrayerTime.fromJson(i)).toList();
 
     return JadwalResponse(
       status: json['status'] ?? 0,

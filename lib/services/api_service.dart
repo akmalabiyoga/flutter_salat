@@ -78,7 +78,7 @@ class ApiService {
       provName = prov.name;
     } catch (_) {}
 
-    List<legacy.JadwalData> resultList = [];
+    List<legacy.PrayerTime> resultList = [];
     if (singleDateJadwal.isNotEmpty) {
       final day = singleDateJadwal.first;
       resultList = _flattenJadwal(day, cityName, provName);
@@ -144,7 +144,7 @@ class ApiService {
     }
   }
 
-  List<legacy.JadwalData> _flattenJadwal(
+  List<legacy.PrayerTime> _flattenJadwal(
     JadwalData day,
     String cityName,
     String provName,
@@ -163,7 +163,7 @@ class ApiService {
     return times.entries.map((e) {
       // Ensure we produce a valid DateTime format like "YYYY-MM-DDTHH:MM:00"
       String isoTime = "${day.date}T${e.value}:00";
-      return legacy.JadwalData(
+      return legacy.PrayerTime(
         prayerDate: day.date,
         prayerTime: isoTime,
         prayerName: e.key,

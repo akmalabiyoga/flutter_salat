@@ -80,28 +80,65 @@ final citiesProvider = FutureProvider.autoDispose.family<List<City>, String>((re
 });
 
 // Provider to handle notification scheduling
-final notificationSchedulerProvider = Provider.autoDispose((ref) {
-  final jadwalAsync = ref.watch(jadwalFutureProvider);
+final notificationSchedulerProvider = Provider((ref) {
+  final cityId = ref.watch(cityIdProvider);
+  if (cityId.isEmpty) return null;
 
-  jadwalAsync.whenData((response) async {
-    if (response.data.isNotEmpty) {
-      final service = NotificationService();
-      await service.cancelAll();
-      
-      for (int i = 0; i < response.data.length; i++) {
-        final d = response.data[i];
-        final dt = DateTime.tryParse(d.prayerTime);
-        if (dt != null && dt.isAfter(DateTime.now())) {
-          await service.scheduleNotification(
-            id: i,
-            title: 'Waktunya Sholat ${d.prayerName}',
-            body: 'Waktunya sholat ${d.prayerName} untuk wilayah ${d.kabupatenKotaName}',
-            scheduledDate: dt,
-          );
-        }
+  final apiService = ref.watch(apiServiceProvider);
+  final service = NotificationService();
+
+  Future<void> scheduleNext() async {
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    
+    // Try today's schedule
+    final responseToday = await apiService.fetchJadwal(cityId, todayStr);
+    
+    PrayerTime? nextPrayer;
+    for (final d in responseToday.data) {
+      final dt = DateTime.tryParse(d.prayerTime);
+      if (dt != null && dt.isAfter(now)) {
+        nextPrayer = d;
+        break;
       }
     }
+
+    // If no more prayers today, try tomorrow
+    if (nextPrayer == null) {
+      final tomorrow = now.add(const Duration(days: 1));
+      final tomorrowStr = DateFormat('yyyy-MM-dd').format(tomorrow);
+      final responseTomorrow = await apiService.fetchJadwal(cityId, tomorrowStr);
+      if (responseTomorrow.data.isNotEmpty) {
+        nextPrayer = responseTomorrow.data.first;
+      }
+    }
+
+    if (nextPrayer != null) {
+      final dt = DateTime.tryParse(nextPrayer.prayerTime);
+      if (dt != null) {
+        await service.cancelAll();
+        await service.scheduleNotification(
+          id: 0, // We only ever have one scheduled
+          title: 'Waktunya Sholat ${nextPrayer.prayerName}',
+          body: 'Waktunya sholat ${nextPrayer.prayerName} untuk wilayah ${nextPrayer.kabupatenKotaName}',
+          scheduledDate: dt,
+        );
+      }
+    }
+  }
+
+  // Initial schedule
+  scheduleNext();
+
+  // Listen for notification fired events to schedule the next one
+  final subscription = service.onNotificationFired.listen((_) {
+    // Wait a bit to ensure the "now" is past the triggered time
+    Future.delayed(const Duration(seconds: 5), () => scheduleNext());
   });
-  
+
+  ref.onDispose(() {
+    subscription.cancel();
+  });
+
   return null;
 });

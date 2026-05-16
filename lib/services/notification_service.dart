@@ -14,6 +14,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   final Map<int, Timer> _linuxTimers = {};
+  final StreamController<int> _onNotificationFired = StreamController<int>.broadcast();
+  Stream<int> get onNotificationFired => _onNotificationFired.stream;
 
   Future<void> init() async {
     tz.initializeTimeZones();
@@ -87,6 +89,7 @@ class NotificationService {
       _linuxTimers[id] = Timer(duration, () {
         showNotification(id: id, title: title, body: body);
         _linuxTimers.remove(id);
+        _onNotificationFired.add(id);
       });
       debugPrint('Scheduled notification on Linux for $scheduledDate (in ${duration.inMinutes} minutes)');
     } else {
