@@ -21,15 +21,29 @@ jobs:
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build rpm
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build
           
-      - name: Build RPM
-        run: |
-          dart run fastforge package --target linux --type rpm
+      - name: Build Linux
+        run: flutter build linux --release
         
+      - name: Package Release
+        run: |
+          # Copy install script and icon
+          cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
+          cp assets/app_icon.png build/linux/x64/release/bundle/app_icon.png
+          
+          # Find and bundle libayatana and libdbusmenu
+          mkdir -p build/linux/x64/release/bundle/lib
+          cp /usr/lib/x86_64-linux-gnu/libayatana-appindicator3.so.1 build/linux/x64/release/bundle/lib/ || true
+          cp /usr/lib/x86_64-linux-gnu/libdbusmenu-gtk3.so.4 build/linux/x64/release/bundle/lib/ || true
+          cp /usr/lib/x86_64-linux-gnu/libdbusmenu-glib.so.4 build/linux/x64/release/bundle/lib/ || true
+          
+          cd build/linux/x64/release/bundle
+          tar -czvf $GITHUB_WORKSPACE/flutter_salat_linux.tar.gz .
+          
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/release/*.rpm
+          files: flutter_salat_linux.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
