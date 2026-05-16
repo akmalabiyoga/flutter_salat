@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Jadwal Salat
+Comment=Prayer Schedule Application
+Exec=jadwal-salat
+Icon=jadwal-salat
+Terminal=false
+Categories=Utility;
+StartupWMClass=com.dedoy.flutter_salat

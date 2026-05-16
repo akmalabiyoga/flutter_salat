@@ -1,0 +1,64 @@
+name: jadwal-salat
+title: Jadwal Salat
+version: '1.0.0'
+summary: A simple and beautiful prayer schedule application.
+description: |
+  Jadwal Salat is a Flutter-based application that provides accurate 
+  prayer times, notifications, and a system tray icon for easy access.
+icon: snap/gui/jadwal-salat.png
+contact: https://github.com/akmalabiyoga/flutter_salat/issues
+license: MIT
+website: https://github.com/akmalabiyoga/flutter_salat
+issues: https://github.com/akmalabiyoga/flutter_salat/issues
+source-code: https://github.com/akmalabiyoga/flutter_salat
+
+base: core22
+confinement: strict
+grade: stable
+
+apps:
+  jadwal-salat:
+    command: jadwal_salat
+    desktop: snap/gui/jadwal-salat.desktop
+    extensions: [gnome]
+    plugs:
+      - network
+      - network-bind
+      - system-observe
+      - unity7
+    slots:
+      - dbus-jadwal-salat
+
+slots:
+  dbus-jadwal-salat:
+    interface: dbus
+    bus: session
+    name: com.dedoy.flutter_salat
+
+parts:
+  app:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart
+    build-packages:
+      - clang
+      - cmake
+      - ninja-build
+      - pkg-config
+      - lld
+      - llvm
+      - libgtk-3-dev
+      - liblzma-dev
+      - libayatana-appindicator3-dev
+      - libdbusmenu-gtk3-dev
+      - libsqlite3-dev
+    stage-packages:
+      - libayatana-appindicator3-1
+      - libdbusmenu-gtk3-4
+      - libsqlite3-0
+    override-build: |
+      # Fix for Flutter build tool looking for LLVM in a specific path
+      if [ ! -d /usr/lib/llvm-14 ] && [ -d /usr/lib/llvm-* ]; then
+          ln -s /usr/lib/llvm-* /usr/lib/llvm-14 || true
+      fi
+      craftctl default

@@ -30,6 +30,7 @@ jobs:
         run: |
           # Copy install script and icon
           cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
+          cp uninstall_desktop_entry.sh build/linux/x64/release/bundle/uninstall.sh
           cp assets/app_icon.png build/linux/x64/release/bundle/app_icon.png
           
           # Bulk bundle libraries
@@ -38,7 +39,7 @@ jobs:
           cp /usr/lib/x86_64-linux-gnu/libdbusmenu* build/linux/x64/release/bundle/lib/ || true
           
           # Create wrapper script for LD_LIBRARY_PATH
-          printf '#!/bin/bash\nSCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nexport LD_LIBRARY_PATH="$SCRIPT_DIR/lib:$LD_LIBRARY_PATH"\nexec "$SCRIPT_DIR/flutter_salat" "$@"\n' > build/linux/x64/release/bundle/run_app.sh
+          printf '#!/bin/bash\nSCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\nexport LD_LIBRARY_PATH="$SCRIPT_DIR/lib:$LD_LIBRARY_PATH"\nexec "$SCRIPT_DIR/jadwal_salat" "$@"\n' > build/linux/x64/release/bundle/run_app.sh
           chmod +x build/linux/x64/release/bundle/run_app.sh
           
           cd build/linux/x64/release/bundle
