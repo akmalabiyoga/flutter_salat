@@ -54,12 +54,19 @@ static void my_application_activate(GApplication* application) {
 
   // Set the window icon
   g_autoptr(GError) error = nullptr;
-  // In the release bundle, the icon is in data/flutter_assets/assets/
-  if (!gtk_window_set_icon_from_file(window, "bundle/data/flutter_assets/assets/app_icon.png", &error)) {
-    // Try without bundle prefix (if running directly from bundle dir)
-    g_clear_error(&error);
-    if (!gtk_window_set_icon_from_file(window, "data/flutter_assets/assets/app_icon.png", &error)) {
-      g_warning("Failed to set window icon: %s", error->message);
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe_path) {
+    g_autofree gchar* exe_dir = g_path_get_dirname(exe_path);
+    g_autofree gchar* icon_path = g_build_filename(exe_dir, "data", "flutter_assets", "assets", "app_icon.png", nullptr);
+    gtk_window_set_icon_from_file(window, icon_path, nullptr);
+  }
+
+  // Fallback for development (running from project root) or if the above failed
+  if (gtk_window_get_icon(window) == nullptr) {
+    if (!gtk_window_set_icon_from_file(window, "assets/app_icon.png", nullptr)) {
+      if (!gtk_window_set_icon_from_file(window, "data/flutter_assets/assets/app_icon.png", &error)) {
+        g_warning("Failed to set window icon: %s", error->message);
+      }
     }
   }
 
