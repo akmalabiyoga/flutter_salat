@@ -21,21 +21,15 @@ jobs:
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build rpm
           
-      - name: Build Linux
-        run: flutter build linux --release
-        
-      - name: Package Release
+      - name: Build RPM
         run: |
-          cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
-          cp assets/app_icon.png build/linux/x64/release/bundle/app_icon.png
-          cd build/linux/x64/release/bundle
-          tar -czvf $GITHUB_WORKSPACE/flutter_salat_linux.tar.gz .
-          
+          dart run fastforge package --target linux --type rpm
+        
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: flutter_salat_linux.tar.gz
+          files: dist/release/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

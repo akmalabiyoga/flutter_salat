@@ -62,6 +62,8 @@ dev_dependencies:
   drift_dev: ^2.33.0
   build_runner: ^2.15.0
   flutter_launcher_icons: ^0.14.1
+  flutter_distributor: ^0.6.6
+  fastforge: ^0.6.6
 
 flutter_launcher_icons:
   android: "launcher_icon"
