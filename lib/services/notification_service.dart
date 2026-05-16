@@ -21,7 +21,7 @@ class NotificationService {
     tz.initializeTimeZones();
     
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const LinuxInitializationSettings initializationSettingsLinux =
         LinuxInitializationSettings(
@@ -33,12 +33,16 @@ class NotificationService {
       linux: initializationSettingsLinux,
     );
 
-    await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        debugPrint('Notification clicked: ${details.payload}');
-      },
-    );
+    try {
+      await _notificationsPlugin.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+          debugPrint('Notification clicked: ${details.payload}');
+        },
+      );
+    } catch (e) {
+      debugPrint('Error initializing notifications: $e');
+    }
   }
 
   Future<void> showNotification({
