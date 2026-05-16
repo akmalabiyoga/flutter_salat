@@ -28,6 +28,8 @@ jobs:
         
       - name: Package Release
         run: |
+          cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
+          cp assets/app_icon.png build/linux/x64/release/bundle/app_icon.png
           cd build/linux/x64/release/bundle
           tar -czvf $GITHUB_WORKSPACE/flutter_salat_linux.tar.gz .
           
