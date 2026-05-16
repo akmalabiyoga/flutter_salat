@@ -8,8 +8,6 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       
@@ -26,7 +24,7 @@ jobs:
       - name: Build Linux
         run: flutter build linux --release
         
-      - name: Package Release
+      - name: Package Linux Release
         run: |
           # Copy install script and icon
           cp install_desktop_entry.sh build/linux/x64/release/bundle/install.sh
@@ -44,10 +42,62 @@ jobs:
           
           cd build/linux/x64/release/bundle
           tar -czvf $GITHUB_WORKSPACE/flutter_salat_linux.tar.gz .
-          
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: flutter_salat_linux.tar.gz
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk flutter_salat_android.apk
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: flutter_salat_android.apk
+
+  release:
+    needs: [build-linux, build-android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: flutter_salat_linux.tar.gz
+          files: |
+            flutter_salat_linux.tar.gz
+            flutter_salat_android.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
