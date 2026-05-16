@@ -45,13 +45,19 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
   @override
   Widget build(BuildContext context) {
     final jadwalAsyncValue = ref.watch(jadwalFutureProvider);
-    final selectedCity = ref.watch(cityIdProvider);
+    final selectedDate = ref.watch(selectedDateProvider);
+
+    final now = DateTime.now();
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
 
     // Activate notification scheduler
     ref.watch(notificationSchedulerProvider);
 
-    // Use the proper city name from the API response if available, else fallback to slug
-    String displayCityName = selectedCity.toUpperCase();
+
+    // Use the proper city name from the API response
+    String displayCityName = "Select Location";
     if (jadwalAsyncValue.hasValue &&
         jadwalAsyncValue.value != null &&
         jadwalAsyncValue.value!.data.isNotEmpty) {
@@ -66,12 +72,6 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(jadwalFutureProvider);
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.pushNamed(context, '/config');
@@ -79,18 +79,38 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          return ref.refresh(jadwalFutureProvider.future);
-        },
-        child: Column(
+      body: Column(
           children: [
             Expanded(
               child: jadwalAsyncValue.when(
               data: (response) {
                 if (response.data.isEmpty) {
-                  return const Center(
-                    child: Text('No schedule available for today.'),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 64, color: Colors.teal.withValues(alpha: 0.5)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No location selected',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Please configure your city to see prayer times.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.pushNamed(context, '/config'),
+                          icon: const Icon(Icons.settings),
+                          label: const Text('Configure Location'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -157,9 +177,10 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
 
                 return Column(
                   children: [
-                    // Top Container: Nearest Prayer
-                    Container(
-                      width: double.infinity,
+                    // Top Container: Nearest Prayer (Only for Today)
+                    if (isToday)
+                      Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                           vertical: 24,
                           horizontal: 16,
@@ -194,8 +215,8 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                         ),
                       ),
 
-                    // Below Container: Unhighlighted adjacent
-                    if (unhighlightedIndex != null)
+                    // Below Container: Unhighlighted adjacent (Only for Today)
+                    if (isToday && unhighlightedIndex != null)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -227,10 +248,10 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                               ? DateFormat('HH:mm').format(timeObj)
                               : item.prayerTime;
 
-                          final isNearest = index == nearestPrayerIndex;
-                          final isLastOrNext =
-                              index == lastPrayerIndex ||
-                              index == nextPrayerIndex;
+                          final isNearest = isToday && index == nearestPrayerIndex;
+                          final isLastOrNext = isToday &&
+                              (index == lastPrayerIndex ||
+                               index == nextPrayerIndex);
 
                           return Card(
                             elevation: isLastOrNext ? 0 : 1,
@@ -303,9 +324,45 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
               ),
             ),
           ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () {
+                    ref.read(selectedDateProvider.notifier).previousDay();
+                  },
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      ref.read(selectedDateProvider.notifier).setToday();
+                    },
+                    child: Text(
+                      DateFormat('EEEE, d MMMM yyyy').format(ref.watch(selectedDateProvider)),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.teal.shade800,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () {
+                    ref.read(selectedDateProvider.notifier).nextDay();
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
-    ),
     );
   }
 }

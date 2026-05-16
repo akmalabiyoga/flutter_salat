@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,21 @@ import '../services/bimas_islam_scraper.dart';
 import '../models/jadwal_model.dart';
 import '../services/database/database_provider.dart';
 import '../services/notification_service.dart';
+
+// Provider for the currently viewed date (defaults to today)
+final selectedDateProvider = NotifierProvider<SelectedDateNotifier, DateTime>(() {
+  return SelectedDateNotifier();
+});
+
+class SelectedDateNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() => DateTime.now();
+
+  void nextDay() => state = state.add(const Duration(days: 1));
+  void previousDay() => state = state.subtract(const Duration(days: 1));
+  void setToday() => state = DateTime.now();
+}
+
 
 // Provider for BimasIslamScraper
 final scraperProvider = Provider((ref) => BimasIslamScraper());
@@ -19,29 +35,22 @@ final apiServiceProvider = Provider((ref) {
 });
 
 // Provider for the configured City ID
-final cityIdProvider = NotifierProvider<CityIdNotifier, String>(() {
+final cityIdProvider = AsyncNotifierProvider<CityIdNotifier, String>(() {
   return CityIdNotifier();
 });
 
-class CityIdNotifier extends Notifier<String> {
+class CityIdNotifier extends AsyncNotifier<String> {
   @override
-  String build() {
-    _loadCity();
-    return ''; // Default empty, meaning user needs to select
-  }
-
-  Future<void> _loadCity() async {
+  FutureOr<String> build() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedCity = prefs.getString('city_id');
-    if (savedCity != null && savedCity.isNotEmpty) {
-      state = savedCity;
-    }
+    return prefs.getString('city_id') ?? '';
   }
 
   Future<void> setCity(String newCityId) async {
-    state = newCityId;
+    state = const AsyncLoading();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('city_id', newCityId);
+    state = AsyncData(newCityId);
   }
 }
 
@@ -49,18 +58,28 @@ class CityIdNotifier extends Notifier<String> {
 final jadwalFutureProvider = FutureProvider.autoDispose<JadwalResponse>((
   ref,
 ) async {
-  final cityId = ref.watch(cityIdProvider);
+  // Properly wait for the cityId to be loaded from storage
+  final cityId = await ref.watch(cityIdProvider.future);
+  
   if (cityId.isEmpty) {
     // If no city selected, return empty data
     return JadwalResponse(status: 0, message: 'No city selected', data: []);
   }
 
+  final selectedDate = ref.watch(selectedDateProvider);
   final apiService = ref.watch(apiServiceProvider);
 
-  // Format current date to YYYY-MM-DD
-  final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  // Format date to YYYY-MM-DD
+  final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
 
-  return apiService.fetchJadwal(cityId, currentDate);
+  final response = await apiService.fetchJadwal(cityId, dateStr);
+  
+  if (response.status == 0 && response.message == 'Invalid city') {
+    // If the city ID is invalid (e.g. legacy slug), reset it to trigger re-config
+    Future.microtask(() => ref.read(cityIdProvider.notifier).setCity(''));
+  }
+  
+  return response;
 });
 
 // FutureProvider for Provinces
@@ -81,7 +100,10 @@ final citiesProvider = FutureProvider.autoDispose.family<List<City>, String>((re
 
 // Provider to handle notification scheduling
 final notificationSchedulerProvider = Provider((ref) {
-  final cityId = ref.watch(cityIdProvider);
+  final cityIdAsync = ref.watch(cityIdProvider);
+  if (cityIdAsync.isLoading) return null;
+  
+  final cityId = cityIdAsync.value ?? '';
   if (cityId.isEmpty) return null;
 
   final apiService = ref.watch(apiServiceProvider);

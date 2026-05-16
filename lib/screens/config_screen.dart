@@ -18,7 +18,8 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
   @override
   Widget build(BuildContext context) {
     final provincesAsync = ref.watch(provincesProvider);
-    final currentCityId = ref.watch(cityIdProvider);
+    final cityIdAsync = ref.watch(cityIdProvider);
+    final currentCityId = cityIdAsync.value ?? '';
 
     return Scaffold(
       appBar: AppBar(

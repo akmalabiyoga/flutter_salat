@@ -57,8 +57,21 @@ class ApiService {
     );
 
     if (localJadwal.isEmpty) {
-      await _scrapeAndSaveMonth(citySlugOrId, dt.year, dt.month);
-      localJadwal = await db.getJadwalByCityAndMonth(citySlugOrId, yearMonth);
+      // Verify city exists before scraping
+      try {
+        await (db.select(
+          db.cities,
+        )..where((t) => t.id.equals(citySlugOrId))).getSingle();
+        await _scrapeAndSaveMonth(citySlugOrId, dt.year, dt.month);
+        localJadwal = await db.getJadwalByCityAndMonth(citySlugOrId, yearMonth);
+      } catch (e) {
+        // City not found or other error, return empty
+        return legacy.JadwalResponse(
+          status: 0,
+          message: 'Invalid city',
+          data: [],
+        );
+      }
     }
 
     // Convert to legacy flat list
@@ -140,7 +153,7 @@ class ApiService {
         await db.insertJadwalList(toInsert);
       }
     } catch (e) {
-      print('Error scraping month: \$e');
+      print('Error scraping month: $e');
     }
   }
 

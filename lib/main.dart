@@ -9,17 +9,17 @@ import 'services/tray_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize notifications
   await NotificationService().init();
-  
+
   // Window manager and Tray is only for Desktop
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     await windowManager.ensureInitialized();
     await TrayService().init();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(450, 600),
+      size: Size(450, 700),
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
