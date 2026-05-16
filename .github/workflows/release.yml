@@ -1,0 +1,37 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev ninja-build
+          
+      - name: Build Linux
+        run: flutter build linux --release
+        
+      - name: Package Release
+        run: |
+          cd build/linux/x64/release/bundle
+          tar -czvf ../../../../flutter_salat_linux.tar.gz .
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: flutter_salat_linux.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
