@@ -42,14 +42,24 @@ static void my_application_activate(GApplication* application) {
     }
   }
 #endif
+
+  // On Wayland or if the above didn't decide, check the desktop environment.
+  // GtkHeaderBar is primarily intended for GNOME and can cause integration
+  // issues (like missing icons) on other desktops like KDE Plasma.
+  if (use_header_bar) {
+    const gchar* current_desktop = g_getenv("XDG_CURRENT_DESKTOP");
+    if (current_desktop && g_strstr_len(current_desktop, -1, "GNOME") == nullptr) {
+      use_header_bar = FALSE;
+    }
+  }
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "flutter_salat");
+    gtk_header_bar_set_title(header_bar, "Jadwal Salat");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "flutter_salat");
+    gtk_window_set_title(window, "Jadwal Salat");
   }
 
   // Set the window icon
