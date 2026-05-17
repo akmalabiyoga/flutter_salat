@@ -103,8 +103,8 @@ Jika Anda ingin melakukan modifikasi kode atau melakukan *build* mandiri dari *s
 
 ## 🖥️ Kompilasi Khusus Platform Non-Rilis (Windows, iOS, macOS)
 
-> [!NOTE]  
-> **Catatan Asisten AI**: Bagian panduan kompilasi untuk platform Windows, iOS, dan macOS di bawah ini diformulasikan khusus oleh AI untuk mempermudah proses build mandiri pada sistem operasi yang belum dicakup di Halaman Rilis resmi.
+> [!WARNING]  
+> **PENTING - Catatan AI**: Seluruh panduan kompilasi untuk platform Windows, iOS, dan macOS di bawah ini diformulasikan secara otomatis oleh AI. **Langkah-langkah build ini belum diverifikasi atau diuji secara langsung oleh pengembang aplikasi ini.** Kami menyantumkannya di sini sebagai panduan dasar umum Flutter. Jika Anda mencoba melakukan kompilasi pada platform tersebut dan menemukan kendala, silakan laporkan melalui *Issue* atau kirimkan *Pull Request* perbaikan Anda!
 
 ### 🪟 1. Windows Desktop
 Sebelum melakukan build di Windows, pastikan Anda telah menginstal **Visual Studio** (bukan VS Code) yang dilengkapi dengan beban kerja **"Desktop development with C++"** beserta Windows SDK yang sesuai.
