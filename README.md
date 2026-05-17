@@ -42,9 +42,16 @@ Aplikasi ini dirancang sederhana namun memiliki fitur yang sangat kaya untuk men
 Bagi pengguna yang ingin langsung menggunakan aplikasi tanpa melakukan *build* dari *source code*, Anda dapat mengunduh paket siap pakai langsung dari **[Halaman Rilis / Release Page](https://github.com/akmalabiyoga/flutter_salat/releases)**:
 
 ### 🤖 Android (.apk)
-1. Unduh berkas `.apk` terbaru dari Halaman Rilis.
-2. Transfer berkas tersebut ke perangkat Android Anda (atau unduh langsung dari ponsel).
-3. Buka file `.apk` tersebut melalui File Manager dan berikan izin instalasi dari sumber tidak dikenal (*unknown sources*) jika diminta oleh sistem.
+Kami menyediakan beberapa opsi berkas `.apk` di Halaman Rilis untuk menyesuaikan dengan kebutuhan perangkat Anda:
+* **`flutter_salat_android_universal.apk`**: Berisi seluruh arsitektur sistem. Pilih berkas ini jika Anda ragu mengenai jenis prosesor ponsel Anda. Ukuran berkas paling besar.
+* **`flutter_salat_android_arm64-v8a.apk`**: **Sangat direkomendasikan** untuk sebagian besar ponsel Android modern saat ini (ARM 64-bit). Ukuran berkas jauh lebih kecil sehingga sangat menghemat kuota data unduhan Anda.
+* **`flutter_salat_android_armeabi-v7a.apk`**: Khusus untuk ponsel Android tipe lama (ARM 32-bit).
+* **`flutter_salat_android_x86_64.apk`**: Khusus untuk emulator Android atau perangkat tertentu dengan prosesor berbasis Intel/AMD x86_64.
+
+**Langkah Instalasi**:
+1. Unduh salah satu berkas `.apk` yang sesuai dengan ponsel Anda dari Halaman Rilis.
+2. Buka berkas `.apk` hasil unduhan melalui aplikasi File Manager di ponsel Anda.
+3. Berikan izin instalasi dari sumber tidak dikenal (*unknown sources*) jika diminta oleh sistem operasi Android Anda.
 4. Aplikasi siap digunakan!
 
 ### 🐧 Linux (.tar.gz)

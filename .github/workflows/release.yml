@@ -65,17 +65,27 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Android APK
-        run: flutter build apk --release
+      - name: Build Android APKs (Universal & Split)
+        run: |
+          # Build universal APK
+          flutter build apk --release
+          mv build/app/outputs/flutter-apk/app-release.apk flutter_salat_android_universal.apk
+          
+          # Build split-per-abi APKs (saves user data)
+          flutter build apk --release --split-per-abi
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk flutter_salat_android_armeabi-v7a.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk flutter_salat_android_arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-x86_64-release.apk flutter_salat_android_x86_64.apk
 
-      - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk flutter_salat_android.apk
-
-      - name: Upload Android Artifact
+      - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-build
-          path: flutter_salat_android.apk
+          path: |
+            flutter_salat_android_universal.apk
+            flutter_salat_android_armeabi-v7a.apk
+            flutter_salat_android_arm64-v8a.apk
+            flutter_salat_android_x86_64.apk
 
   release:
     needs: [build-linux, build-android]
@@ -98,6 +108,9 @@ jobs:
         with:
           files: |
             flutter_salat_linux.tar.gz
-            flutter_salat_android.apk
+            flutter_salat_android_universal.apk
+            flutter_salat_android_armeabi-v7a.apk
+            flutter_salat_android_arm64-v8a.apk
+            flutter_salat_android_x86_64.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
