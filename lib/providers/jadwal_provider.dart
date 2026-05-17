@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -110,94 +111,93 @@ final notificationSchedulerProvider = Provider((ref) {
   final apiService = ref.watch(apiServiceProvider);
   final service = NotificationService();
 
-    Future<void> updateWidgetData(List<PrayerTime> prayerTimes) async {
+    Future<void> updateWidgetData(List<PrayerTime> todayPrayerTimes) async {
       final now = DateTime.now();
-      int? lastPrayerIndex;
-      int? nextPrayerIndex;
+      
+      // Fetch yesterday's and tomorrow's to correctly handle day transitions
+      final yesterdayStr = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+      final tomorrowStr = DateFormat('yyyy-MM-dd').format(now.add(const Duration(days: 1)));
+      
+      final responseYesterday = await apiService.fetchJadwal(cityId, yesterdayStr);
+      final responseTomorrow = await apiService.fetchJadwal(cityId, tomorrowStr);
+      
+      final List<PrayerTime> allPrayerTimes = [
+        ...responseYesterday.data,
+        ...todayPrayerTimes,
+        ...responseTomorrow.data,
+      ];
+
+      PrayerTime? lastPrayer;
+      PrayerTime? nextPrayer;
       Duration? minLastDuration;
       Duration? minNextDuration;
 
-      for (int i = 0; i < prayerTimes.length; i++) {
-        final timeObj = DateTime.tryParse(prayerTimes[i].prayerTime);
+      for (final prayer in allPrayerTimes) {
+        final timeObj = DateTime.tryParse(prayer.prayerTime);
         if (timeObj != null) {
           if (timeObj.isBefore(now)) {
             final diff = now.difference(timeObj);
             if (minLastDuration == null || diff < minLastDuration) {
               minLastDuration = diff;
-              lastPrayerIndex = i;
+              lastPrayer = prayer;
             }
           } else if (timeObj.isAfter(now)) {
             final diff = timeObj.difference(now);
             if (minNextDuration == null || diff < minNextDuration) {
               minNextDuration = diff;
-              nextPrayerIndex = i;
+              nextPrayer = prayer;
             }
           }
         }
       }
 
-      int? nearestPrayerIndex;
-      if (minLastDuration != null && minNextDuration != null) {
-        nearestPrayerIndex = minLastDuration < minNextDuration ? lastPrayerIndex : nextPrayerIndex;
-      } else if (minLastDuration != null) {
-        nearestPrayerIndex = lastPrayerIndex;
-      } else if (minNextDuration != null) {
-        nearestPrayerIndex = nextPrayerIndex;
+      String formatDuration(Duration duration) {
+        int hours = duration.inHours;
+        int minutes = duration.inMinutes.remainder(60);
+        if (hours > 0) {
+          return "${hours}h ${minutes}m";
+        } else {
+          return "${minutes}m";
+        }
       }
 
-      if (nearestPrayerIndex != null) {
-        final nearest = prayerTimes[nearestPrayerIndex];
-        final nearestTime = DateTime.parse(nearest.prayerTime);
-
-        String formatDuration(Duration duration) {
-          int hours = duration.inHours;
-          int minutes = duration.inMinutes.remainder(60);
-          if (hours > 0) {
-            return "${hours}h ${minutes}m";
-          } else {
-            return "${minutes}m";
-          }
-        }
-
-        final bool nearestIsNext = nearestPrayerIndex == nextPrayerIndex;
-        final Duration nearestDiff = nearestIsNext
-            ? nearestTime.difference(now)
-            : now.difference(nearestTime);
-        final String nearestStatus = nearestIsNext
-            ? "In ${formatDuration(nearestDiff)}"
-            : "${formatDuration(nearestDiff)} ago";
-
-        int? secondaryIndex;
-        bool secondaryIsNext = false;
-        if (nearestPrayerIndex == lastPrayerIndex) {
-          secondaryIndex = nextPrayerIndex;
-          secondaryIsNext = true;
-        } else {
-          secondaryIndex = lastPrayerIndex;
-          secondaryIsNext = false;
-        }
+      // Main widget display should ALWAYS be the NEXT prayer (showing time remaining)
+      // Secondary widget display should ALWAYS be the LAST prayer (showing time elapsed)
+      if (nextPrayer != null) {
+        final nextTime = DateTime.parse(nextPrayer.prayerTime);
+        final Duration remainingDiff = nextTime.difference(now);
+        final String remainingStatus = "In ${formatDuration(remainingDiff)}";
 
         String secondaryText = "";
-        if (secondaryIndex != null) {
-          final secondary = prayerTimes[secondaryIndex];
-          final secondaryTime = DateTime.parse(secondary.prayerTime);
-          final Duration secondaryDiff = secondaryIsNext
-              ? secondaryTime.difference(now)
-              : now.difference(secondaryTime);
-          final String durationStr = formatDuration(secondaryDiff);
+        if (lastPrayer != null) {
+          final lastTime = DateTime.parse(lastPrayer.prayerTime);
+          final Duration elapsedDiff = now.difference(lastTime);
+          final String durationStr = formatDuration(elapsedDiff);
           secondaryText =
-              "${secondary.prayerName} ${DateFormat('HH:mm').format(secondaryTime)} • ${secondaryIsNext ? 'In ' : ''}$durationStr${secondaryIsNext ? '' : ' ago'}";
+              "${lastPrayer.prayerName} ${DateFormat('HH:mm').format(lastTime)} • $durationStr ago";
         }
 
-        print(
-            'Updating widget: ${nearest.prayerName} $nearestStatus');
-        await HomeWidget.saveWidgetData<String>(
-            'prayer_name', nearest.prayerName);
-        await HomeWidget.saveWidgetData<String>(
-            'prayer_time', DateFormat('HH:mm').format(nearestTime));
-        await HomeWidget.saveWidgetData<String>('prayer_status', nearestStatus);
-        await HomeWidget.saveWidgetData<String>(
-            'secondary_prayer', secondaryText);
+        print('Updating widget: ${nextPrayer.prayerName} $remainingStatus');
+        await HomeWidget.saveWidgetData<String>('prayer_name', nextPrayer.prayerName);
+        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(nextTime));
+        await HomeWidget.saveWidgetData<String>('prayer_status', remainingStatus);
+        await HomeWidget.saveWidgetData<String>('secondary_prayer', secondaryText);
+        final result = await HomeWidget.updateWidget(
+          name: 'SalatWidgetProvider',
+          androidName: 'SalatWidgetProvider',
+        );
+        print('Widget update result: $result');
+      } else if (lastPrayer != null) {
+        // Fallback if no next prayer is available
+        final lastTime = DateTime.parse(lastPrayer.prayerTime);
+        final Duration elapsedDiff = now.difference(lastTime);
+        final String elapsedStatus = "${formatDuration(elapsedDiff)} ago";
+
+        print('Updating widget fallback: ${lastPrayer.prayerName} $elapsedStatus');
+        await HomeWidget.saveWidgetData<String>('prayer_name', lastPrayer.prayerName);
+        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(lastTime));
+        await HomeWidget.saveWidgetData<String>('prayer_status', elapsedStatus);
+        await HomeWidget.saveWidgetData<String>('secondary_prayer', '');
         final result = await HomeWidget.updateWidget(
           name: 'SalatWidgetProvider',
           androidName: 'SalatWidgetProvider',
@@ -217,39 +217,92 @@ final notificationSchedulerProvider = Provider((ref) {
         await updateWidgetData(responseToday.data);
       }
 
-      PrayerTime? nextPrayer;
-      for (final d in responseToday.data) {
-        final dt = DateTime.tryParse(d.prayerTime);
-        if (dt != null && dt.isAfter(now)) {
-          nextPrayer = d;
-          break;
-        }
-      }
-
-      // If no more prayers today, try tomorrow
-      if (nextPrayer == null) {
-        final tomorrow = now.add(const Duration(days: 1));
-        final tomorrowStr = DateFormat('yyyy-MM-dd').format(tomorrow);
-        final responseTomorrow = await apiService.fetchJadwal(cityId, tomorrowStr);
-        if (responseTomorrow.data.isNotEmpty) {
-          nextPrayer = responseTomorrow.data.first;
-        }
-      }
-
-      if (nextPrayer != null) {
-        final dt = DateTime.tryParse(nextPrayer.prayerTime);
-        if (dt != null) {
-          try {
-            await service.cancelAll();
-            await service.scheduleNotification(
-              id: 0, // We only ever have one scheduled
-              title: 'Waktunya Sholat ${nextPrayer.prayerName}',
-              body: 'Waktunya sholat ${nextPrayer.prayerName} untuk wilayah ${nextPrayer.kabupatenKotaName}',
-              scheduledDate: dt,
-            );
-          } catch (e) {
-            print('Error scheduling notification: $e');
+      if (Platform.isLinux) {
+        // --- LINUX PLATFORM PATH ---
+        // Linux uses Timers, so it only keeps the single NEXT prayer in memory.
+        PrayerTime? nextPrayer;
+        for (final d in responseToday.data) {
+          final dt = DateTime.tryParse(d.prayerTime);
+          if (dt != null && dt.isAfter(now)) {
+            nextPrayer = d;
+            break;
           }
+        }
+
+        // If no more prayers today, try tomorrow
+        if (nextPrayer == null) {
+          final tomorrow = now.add(const Duration(days: 1));
+          final tomorrowStr = DateFormat('yyyy-MM-dd').format(tomorrow);
+          final responseTomorrow = await apiService.fetchJadwal(cityId, tomorrowStr);
+          if (responseTomorrow.data.isNotEmpty) {
+            nextPrayer = responseTomorrow.data.first;
+          }
+        }
+
+        if (nextPrayer != null) {
+          final dt = DateTime.tryParse(nextPrayer.prayerTime);
+          if (dt != null) {
+            try {
+              await service.cancelAll();
+              await service.scheduleNotification(
+                id: 0, // ID 0 for the single dynamic Linux timer
+                title: 'Waktunya Sholat ${nextPrayer.prayerName}',
+                body: 'Waktunya sholat ${nextPrayer.prayerName} untuk wilayah ${nextPrayer.kabupatenKotaName}',
+                scheduledDate: dt,
+              );
+            } catch (e) {
+              print('Error scheduling notification on Linux: $e');
+            }
+          }
+        }
+      } else {
+        // --- ANDROID & OTHER PLATFORMS PATH (PRE-SCHEDULING) ---
+        try {
+          await service.cancelAll(); // Wipe all previously registered native alarms
+
+          final Map<String, int> prayerIndices = {
+            'Imsak': 0,
+            'Subuh': 1,
+            'Terbit': 2,
+            'Dhuha': 3,
+            'Dzuhur': 4,
+            'Ashar': 5,
+            'Maghrib': 6,
+            'Isya': 7,
+          };
+
+          int scheduledCount = 0;
+
+          // Pre-schedule the next 7 days (today + next 6 days)
+          for (int i = 0; i < 7; i++) {
+            final targetDate = now.add(Duration(days: i));
+            final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+            final response = await apiService.fetchJadwal(cityId, dateStr);
+
+            if (response.data.isEmpty) continue;
+
+            final datePart = dateStr.replaceAll('-', '');
+            final dateInt = int.tryParse(datePart) ?? 0;
+
+            for (final prayer in response.data) {
+              final dt = DateTime.tryParse(prayer.prayerTime);
+              if (dt != null && dt.isAfter(now)) {
+                final idx = prayerIndices[prayer.prayerName] ?? 9;
+                final notificationId = dateInt * 10 + idx;
+
+                await service.scheduleNotification(
+                  id: notificationId,
+                  title: 'Waktunya Sholat ${prayer.prayerName}',
+                  body: 'Waktunya sholat ${prayer.prayerName} untuk wilayah ${prayer.kabupatenKotaName}',
+                  scheduledDate: dt,
+                );
+                scheduledCount++;
+              }
+            }
+          }
+          print('Successfully pre-scheduled $scheduledCount prayers on Android.');
+        } catch (e) {
+          print('Error pre-scheduling notifications on Android: $e');
         }
       }
     }

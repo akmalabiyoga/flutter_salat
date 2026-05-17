@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 
 class SalatWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(
@@ -24,6 +25,13 @@ class SalatWidgetProvider : HomeWidgetProvider() {
                 setTextViewText(R.id.prayer_time, prayerTime)
                 setTextViewText(R.id.prayer_status, prayerStatus)
                 setTextViewText(R.id.secondary_prayer, secondaryPrayer)
+
+                // Launch main activity when clicked
+                val pendingIntent = HomeWidgetLaunchIntent.getActivity(
+                    context,
+                    MainActivity::class.java
+                )
+                setOnClickPendingIntent(R.id.widget_root, pendingIntent)
             }
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
