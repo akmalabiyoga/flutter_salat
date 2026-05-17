@@ -45,8 +45,13 @@ class NotificationService {
         final androidPlugin = _notificationsPlugin
             .resolvePlatformSpecificImplementation<
                 AndroidFlutterLocalNotificationsPlugin>();
+        
         final bool? granted = await androidPlugin?.requestNotificationsPermission();
         debugPrint('Notification permission granted: $granted');
+
+        // Request exact alarm permission (required for Android 13/14+)
+        final bool? exactGranted = await androidPlugin?.requestExactAlarmsPermission();
+        debugPrint('Exact alarm permission granted: $exactGranted');
       }
     } catch (e) {
       debugPrint('Error initializing notifications: $e');
