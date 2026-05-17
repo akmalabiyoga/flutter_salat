@@ -161,48 +161,75 @@ final notificationSchedulerProvider = Provider((ref) {
         }
       }
 
-      // Main widget display should ALWAYS be the NEXT prayer (showing time remaining)
-      // Secondary widget display should ALWAYS be the LAST prayer (showing time elapsed)
-      if (nextPrayer != null) {
-        final nextTime = DateTime.parse(nextPrayer.prayerTime);
-        final Duration remainingDiff = nextTime.difference(now);
-        final String remainingStatus = "In ${formatDuration(remainingDiff)}";
+      PrayerTime? nearestPrayer;
+      bool nearestIsNext = false;
+      Duration? nearestDuration;
 
-        String secondaryText = "";
-        if (lastPrayer != null) {
-          final lastTime = DateTime.parse(lastPrayer.prayerTime);
-          final Duration elapsedDiff = now.difference(lastTime);
-          final String durationStr = formatDuration(elapsedDiff);
-          secondaryText =
-              "${lastPrayer.prayerName} ${DateFormat('HH:mm').format(lastTime)} • $durationStr ago";
+      if (minLastDuration != null && minNextDuration != null) {
+        if (minLastDuration < minNextDuration) {
+          nearestPrayer = lastPrayer;
+          nearestIsNext = false;
+          nearestDuration = minLastDuration;
+        } else {
+          nearestPrayer = nextPrayer;
+          nearestIsNext = true;
+          nearestDuration = minNextDuration;
+        }
+      } else if (minLastDuration != null) {
+        nearestPrayer = lastPrayer;
+        nearestIsNext = false;
+        nearestDuration = minLastDuration;
+      } else if (minNextDuration != null) {
+        nearestPrayer = nextPrayer;
+        nearestIsNext = true;
+        nearestDuration = minNextDuration;
+      }
+
+      PrayerTime? secondaryPrayer;
+      bool secondaryIsNext = false;
+      Duration? secondaryDuration;
+
+      if (nearestPrayer != null) {
+        if (nearestPrayer == lastPrayer) {
+          secondaryPrayer = nextPrayer;
+          secondaryIsNext = true;
+          secondaryDuration = minNextDuration;
+        } else {
+          secondaryPrayer = lastPrayer;
+          secondaryIsNext = false;
+          secondaryDuration = minLastDuration;
         }
 
-        print('Updating widget: ${nextPrayer.prayerName} $remainingStatus');
-        await HomeWidget.saveWidgetData<String>('prayer_name', nextPrayer.prayerName);
-        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(nextTime));
-        await HomeWidget.saveWidgetData<String>('prayer_status', remainingStatus);
-        await HomeWidget.saveWidgetData<String>('secondary_prayer', secondaryText);
-        final result = await HomeWidget.updateWidget(
-          name: 'SalatWidgetProvider',
-          androidName: 'SalatWidgetProvider',
-        );
-        print('Widget update result: $result');
-      } else if (lastPrayer != null) {
-        // Fallback if no next prayer is available
-        final lastTime = DateTime.parse(lastPrayer.prayerTime);
-        final Duration elapsedDiff = now.difference(lastTime);
-        final String elapsedStatus = "${formatDuration(elapsedDiff)} ago";
+        final nearestTime = DateTime.parse(nearestPrayer.prayerTime);
+        final String nearestStatus = nearestIsNext
+            ? "In ${formatDuration(nearestDuration!)}"
+            : "${formatDuration(nearestDuration!)} ago";
 
-        print('Updating widget fallback: ${lastPrayer.prayerName} $elapsedStatus');
-        await HomeWidget.saveWidgetData<String>('prayer_name', lastPrayer.prayerName);
-        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(lastTime));
-        await HomeWidget.saveWidgetData<String>('prayer_status', elapsedStatus);
-        await HomeWidget.saveWidgetData<String>('secondary_prayer', '');
+        String secondaryText = "";
+        if (secondaryPrayer != null && secondaryDuration != null) {
+          final secondaryTime = DateTime.parse(secondaryPrayer.prayerTime);
+          final String durationStr = formatDuration(secondaryDuration);
+          secondaryText =
+              "${secondaryPrayer.prayerName} ${DateFormat('HH:mm').format(secondaryTime)} • ${secondaryIsNext ? 'In ' : ''}$durationStr${secondaryIsNext ? '' : ' ago'}";
+        }
+
+        print('Updating widget: ${nearestPrayer.prayerName} $nearestStatus');
+        await HomeWidget.saveWidgetData<String>('prayer_name', nearestPrayer.prayerName);
+        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(nearestTime));
+        await HomeWidget.saveWidgetData<String>('prayer_status', nearestStatus);
+        await HomeWidget.saveWidgetData<String>('secondary_prayer', secondaryText);
+
         final result = await HomeWidget.updateWidget(
           name: 'SalatWidgetProvider',
           androidName: 'SalatWidgetProvider',
         );
         print('Widget update result: $result');
+
+        final resultSmall = await HomeWidget.updateWidget(
+          name: 'SalatWidgetSmallProvider',
+          androidName: 'SalatWidgetSmallProvider',
+        );
+        print('Small widget update result: $resultSmall');
       }
     }
 

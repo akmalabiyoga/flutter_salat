@@ -40,6 +40,14 @@ class NotificationService {
           debugPrint('Notification clicked: ${details.payload}');
         },
       );
+
+      if (Platform.isAndroid) {
+        final androidPlugin = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        final bool? granted = await androidPlugin?.requestNotificationsPermission();
+        debugPrint('Notification permission granted: $granted');
+      }
     } catch (e) {
       debugPrint('Error initializing notifications: $e');
     }
