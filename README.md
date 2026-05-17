@@ -61,12 +61,12 @@ Untuk distribusi desktop Linux, kami menyediakan paket arsip `.tar.gz` portabel 
    ```
 4. **Memasang ke Menu Aplikasi Desktop**: Agar aplikasi terpasang di menu aplikasi desktop Anda (Application Launcher) sehingga mudah dicari, jalankan perintah instalasi berikut di dalam direktori hasil ekstrak:
    ```bash
-   ./install_desktop_entry.sh
+   ./install.sh
    ```
-   *Skrip ini akan membuat pintasan desktop `.desktop` secara otomatis di direktori `~/.local/share/applications/`.*
-5. **Menghapus Pintasan Desktop**: Jika Anda ingin menghapus pintasannya dari menu sistem di kemudian hari, jalankan:
+   *Skrip ini akan secara otomatis membuat pintasan desktop `.desktop` dan mendaftarkan aset ikon ke dalam menu sistem.*
+5. **Menghapus Aplikasi**: Jika Anda ingin menghapus instalasi aplikasi beserta seluruh pintasan desktop dari menu sistem secara bersih, jalankan:
    ```bash
-   ./uninstall_desktop_entry.sh
+   ./uninstall.sh
    ```
 
 ---
