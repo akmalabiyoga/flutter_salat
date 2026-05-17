@@ -19,10 +19,12 @@ class SalatWidgetSmallProvider : HomeWidgetProvider() {
                 val prayerName = widgetData.getString("prayer_name", "---")
                 val prayerTime = widgetData.getString("prayer_time", "--:--")
                 val prayerStatus = widgetData.getString("prayer_status", "")
+                val secondaryPrayer = widgetData.getString("secondary_prayer", "")
                 
                 setTextViewText(R.id.prayer_name, prayerName)
                 setTextViewText(R.id.prayer_time, prayerTime)
                 setTextViewText(R.id.prayer_status, prayerStatus)
+                setTextViewText(R.id.secondary_prayer, secondaryPrayer)
 
                 // Launch main activity when clicked
                 val pendingIntent = HomeWidgetLaunchIntent.getActivity(

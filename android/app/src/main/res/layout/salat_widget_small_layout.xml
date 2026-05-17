@@ -3,7 +3,7 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
+    android:padding="2dp"
     android:background="@android:color/white">
 
     <LinearLayout
@@ -36,7 +36,7 @@
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="6dp" />
 
         </LinearLayout>
 
@@ -46,9 +46,19 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textColor="#555555"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:layout_marginTop="0dp" />
+
+        <TextView
+            android:id="@+id/secondary_prayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#888888"
             android:textSize="12sp"
             android:gravity="center"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="0dp" />
 
     </LinearLayout>
 
