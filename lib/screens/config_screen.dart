@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/jadwal_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/database/database_provider.dart';
 import '../services/notification_service.dart';
 
@@ -87,6 +88,40 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
               ),
             ],
 
+            const SizedBox(height: 24),
+            const Text(
+              'Theme:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Consumer(
+              builder: (context, ref, child) {
+                final themeMode = ref.watch(themeProvider);
+                return SegmentedButton<ThemeMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      label: Text('System'),
+                      icon: Icon(Icons.brightness_auto),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      label: Text('Light'),
+                      icon: Icon(Icons.light_mode),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      label: Text('Dark'),
+                      icon: Icon(Icons.dark_mode),
+                    ),
+                  ],
+                  selected: {themeMode},
+                  onSelectionChanged: (Set<ThemeMode> newSelection) {
+                    ref.read(themeProvider.notifier).setThemeMode(newSelection.first);
+                  },
+                );
+              },
+            ),
             const SizedBox(height: 32),
             Center(
               child: ElevatedButton(

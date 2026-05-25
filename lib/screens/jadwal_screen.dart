@@ -89,7 +89,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.location_on_outlined, size: 64, color: Colors.teal.withValues(alpha: 0.5)),
+                        Icon(Icons.location_on_outlined, size: 64, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)),
                         const SizedBox(height: 16),
                         const Text(
                           'No location selected',
@@ -185,9 +185,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                           vertical: 24,
                           horizontal: 16,
                         ),
-                        color: Theme.of(
-                          context,
-                        ).primaryColor.withValues(alpha: 0.1),
+                        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
                         child: Column(
                           children: [
                             Text(
@@ -195,7 +193,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -206,9 +204,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withValues(alpha: 0.8),
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
                               ),
                             ),
                           ],
@@ -220,16 +216,14 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
-                        color: Theme.of(
-                          context,
-                        ).primaryColor.withValues(alpha: 0.05),
+                        color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                         child: Center(
                           child: Text(
                             '${response.data[unhighlightedIndex].prayerName} ${DateFormat('HH:mm').format(DateTime.parse(response.data[unhighlightedIndex].prayerTime))}  •  ${unhighlightedIsNext ? 'In' : ''} ${_formatDuration(unhighlightedDuration!)}${unhighlightedIsNext ? '' : ' ago'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: Theme.of(context).colorScheme.onSecondaryContainer,
                             ),
                           ),
                         ),
@@ -256,9 +250,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                           return Card(
                             elevation: isLastOrNext ? 0 : 1,
                             color: isLastOrNext
-                                ? Theme.of(
-                                    context,
-                                  ).primaryColor.withValues(alpha: 0.2)
+                                ? Theme.of(context).colorScheme.primaryContainer
                                 : Theme.of(context).cardColor,
                             margin: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -277,7 +269,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                                           ? FontWeight.bold
                                           : FontWeight.w500,
                                       color: isLastOrNext
-                                          ? Colors.teal.shade900
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer
                                           : null,
                                     ),
                                   ),
@@ -299,7 +291,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: isLastOrNext
-                                      ? Colors.teal.shade900
+                                      ? Theme.of(context).colorScheme.onPrimaryContainer
                                       : null,
                                 ),
                               ),
@@ -327,7 +319,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 4),
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             child: Row(
               children: [
                 IconButton(
@@ -346,7 +338,7 @@ class _JadwalScreenState extends ConsumerState<JadwalScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.teal.shade800,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

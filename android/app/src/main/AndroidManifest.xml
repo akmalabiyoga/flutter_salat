@@ -46,7 +46,8 @@
             android:value="2" />
 
         <receiver android:name=".SalatWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/salat_live_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -55,7 +56,8 @@
         </receiver>
 
         <receiver android:name=".SalatWidgetSmallProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/salat_standard_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

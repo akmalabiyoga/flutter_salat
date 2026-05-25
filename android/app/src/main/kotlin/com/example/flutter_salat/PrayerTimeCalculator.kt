@@ -5,14 +5,22 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 data class CalculatedWidgetData(
     val prayerName: String,
     val prayerTime: String,
     val prayerStatus: String,
-    val secondaryPrayer: String
+    val secondaryPrayer: String,
+    val nearestPrayerTimeMillis: Long? = null,
+    val isCountDown: Boolean = true,
+    val nextUpdateTimeMillis: Long? = null,
+    val secondaryNameTime: String? = null,
+    val secondaryTimeMillis: Long? = null,
+    val secondaryIsCountDown: Boolean = true
 )
 
 object PrayerTimeCalculator {
@@ -21,7 +29,6 @@ object PrayerTimeCalculator {
         val jsonString = widgetData.getString("prayer_times_json", null)
         
         if (jsonString == null) {
-            // Fallback to existing static data if JSON is not available
             return CalculatedWidgetData(
                 prayerName = widgetData.getString("prayer_name", "---") ?: "---",
                 prayerTime = widgetData.getString("prayer_time", "--:--") ?: "--:--",
@@ -90,10 +97,12 @@ object PrayerTimeCalculator {
             val nearestName = nearestPrayer.getString("prayerName")
             val nearestTimeObj = LocalDateTime.parse(nearestPrayer.getString("prayerTime"))
             val nearestTimeStr = nearestTimeObj.format(DateTimeFormatter.ofPattern("HH:mm"))
-            val nearestStatus = if (nearestIsNext) {
-                "In ${formatDuration(nearestDuration!!)}"
+            val nearestTimeMillis = nearestTimeObj.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            
+            val prayerStatus = if (nearestIsNext) {
+                "In ${formatDurationMinutes(nearestDuration!!)}"
             } else {
-                "${formatDuration(nearestDuration!!)} ago"
+                "${formatDurationMinutes(nearestDuration!!)} ago"
             }
 
             var secondaryText = ""
@@ -111,19 +120,40 @@ object PrayerTimeCalculator {
                 secondaryDuration = minLastDuration
             }
 
+            var secondaryNameTime: String? = null
+            var secondaryTimeMillis: Long? = null
             if (secondaryPrayer != null && secondaryDuration != null) {
                 val secName = secondaryPrayer.getString("prayerName")
                 val secTimeObj = LocalDateTime.parse(secondaryPrayer.getString("prayerTime"))
                 val secTimeStr = secTimeObj.format(DateTimeFormatter.ofPattern("HH:mm"))
-                val durStr = formatDuration(secondaryDuration)
+                val durStr = formatDurationMinutes(secondaryDuration)
                 secondaryText = "$secName $secTimeStr • ${if (secondaryIsNext) "In " else ""}$durStr${if (secondaryIsNext) "" else " ago"}"
+                
+                secondaryNameTime = "$secName $secTimeStr •"
+                secondaryTimeMillis = secTimeObj.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
+
+            // Calculate next update time for standard widget (minute boundary or next prayer)
+            var nextUpdate = now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)
+            nextPrayer?.let { 
+                val nextPrayerTime = LocalDateTime.parse(it.getString("prayerTime"))
+                if (nextPrayerTime.isBefore(nextUpdate)) {
+                    nextUpdate = nextPrayerTime
+                }
+            }
+            val nextUpdateTimeMillis = nextUpdate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
             return CalculatedWidgetData(
                 prayerName = nearestName,
                 prayerTime = nearestTimeStr,
-                prayerStatus = nearestStatus,
-                secondaryPrayer = secondaryText
+                prayerStatus = prayerStatus,
+                secondaryPrayer = secondaryText,
+                nearestPrayerTimeMillis = nearestTimeMillis,
+                isCountDown = nearestIsNext,
+                nextUpdateTimeMillis = nextUpdateTimeMillis,
+                secondaryNameTime = secondaryNameTime,
+                secondaryTimeMillis = secondaryTimeMillis,
+                secondaryIsCountDown = secondaryIsNext
             )
 
         } catch (e: Exception) {
@@ -132,9 +162,9 @@ object PrayerTimeCalculator {
         }
     }
 
-    private fun formatDuration(duration: Duration): String {
+    private fun formatDurationMinutes(duration: Duration): String {
         val hours = duration.toHours()
-        val minutes = duration.toMinutes() % 60
+        val minutes = (duration.toMinutes() % 60)
         return if (hours > 0) {
             "${hours}h ${minutes}m"
         } else {

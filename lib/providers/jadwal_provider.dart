@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -214,22 +215,24 @@ final notificationSchedulerProvider = Provider((ref) {
         }
 
         print('Updating widget: ${nearestPrayer.prayerName} $nearestStatus');
-        await HomeWidget.saveWidgetData<String>('prayer_name', nearestPrayer.prayerName);
-        await HomeWidget.saveWidgetData<String>('prayer_time', DateFormat('HH:mm').format(nearestTime));
-        await HomeWidget.saveWidgetData<String>('prayer_status', nearestStatus);
-        await HomeWidget.saveWidgetData<String>('secondary_prayer', secondaryText);
+        
+        final prayerTimesJson = jsonEncode(allPrayerTimes.map((p) => {
+          'prayerName': p.prayerName,
+          'prayerTime': p.prayerTime,
+        }).toList());
+        await HomeWidget.saveWidgetData<String>('prayer_times_json', prayerTimesJson);
 
         final result = await HomeWidget.updateWidget(
           name: 'SalatWidgetProvider',
           androidName: 'SalatWidgetProvider',
         );
-        print('Widget update result: $result');
+        print('Live widget update result: $result');
 
         final resultSmall = await HomeWidget.updateWidget(
           name: 'SalatWidgetSmallProvider',
           androidName: 'SalatWidgetSmallProvider',
         );
-        print('Small widget update result: $resultSmall');
+        print('Standard widget update result: $resultSmall');
       }
     }
 

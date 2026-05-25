@@ -6,6 +6,7 @@ import 'screens/jadwal_screen.dart';
 import 'screens/config_screen.dart';
 import 'services/notification_service.dart';
 import 'services/tray_service.dart';
+import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,16 +77,43 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Jadwal Salat',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const JadwalScreen(),
-        '/config': (context) => const ConfigScreen(),
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeMode = ref.watch(themeProvider);
+        
+        return MaterialApp(
+          title: 'Jadwal Salat',
+          themeMode: themeMode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.teal,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.teal,
+              brightness: Brightness.dark,
+              surface: Colors.black,
+            ),
+            scaffoldBackgroundColor: Colors.black,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.black,
+              surfaceTintColor: Colors.transparent,
+            ),
+            cardTheme: CardThemeData(
+              color: Colors.grey[900],
+            ),
+          ),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const JadwalScreen(),
+            '/config': (context) => const ConfigScreen(),
+          },
+        );
       },
     );
   }
