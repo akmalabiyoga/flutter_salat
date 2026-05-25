@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="salat_live_widget_name">Salat Live</string>
+    <string name="salat_standard_widget_name">Salat Standard</string>
+</resources>
