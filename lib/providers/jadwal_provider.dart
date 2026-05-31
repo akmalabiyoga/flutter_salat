@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 import '../services/database/database.dart';
 import '../services/bimas_islam_scraper.dart';
@@ -186,53 +187,32 @@ final notificationSchedulerProvider = Provider((ref) {
         nearestDuration = minNextDuration;
       }
 
-      PrayerTime? secondaryPrayer;
-      bool secondaryIsNext = false;
-      Duration? secondaryDuration;
-
       if (nearestPrayer != null) {
-        if (nearestPrayer == lastPrayer) {
-          secondaryPrayer = nextPrayer;
-          secondaryIsNext = true;
-          secondaryDuration = minNextDuration;
-        } else {
-          secondaryPrayer = lastPrayer;
-          secondaryIsNext = false;
-          secondaryDuration = minLastDuration;
-        }
-
-        final nearestTime = DateTime.parse(nearestPrayer.prayerTime);
         final String nearestStatus = nearestIsNext
             ? "In ${formatDuration(nearestDuration!)}"
             : "${formatDuration(nearestDuration!)} ago";
 
-        String secondaryText = "";
-        if (secondaryPrayer != null && secondaryDuration != null) {
-          final secondaryTime = DateTime.parse(secondaryPrayer.prayerTime);
-          final String durationStr = formatDuration(secondaryDuration);
-          secondaryText =
-              "${secondaryPrayer.prayerName} ${DateFormat('HH:mm').format(secondaryTime)} • ${secondaryIsNext ? 'In ' : ''}$durationStr${secondaryIsNext ? '' : ' ago'}";
-        }
-
-        print('Updating widget: ${nearestPrayer.prayerName} $nearestStatus');
+        debugPrint('Updating widget: ${nearestPrayer.prayerName} $nearestStatus');
         
         final prayerTimesJson = jsonEncode(allPrayerTimes.map((p) => {
           'prayerName': p.prayerName,
           'prayerTime': p.prayerTime,
         }).toList());
-        await HomeWidget.saveWidgetData<String>('prayer_times_json', prayerTimesJson);
+        if (Platform.isAndroid || Platform.isIOS) {
+          await HomeWidget.saveWidgetData<String>('prayer_times_json', prayerTimesJson);
 
-        final result = await HomeWidget.updateWidget(
-          name: 'SalatWidgetProvider',
-          androidName: 'SalatWidgetProvider',
-        );
-        print('Live widget update result: $result');
+          final result = await HomeWidget.updateWidget(
+            name: 'SalatWidgetProvider',
+            androidName: 'SalatWidgetProvider',
+          );
+          debugPrint('Live widget update result: $result');
 
-        final resultSmall = await HomeWidget.updateWidget(
-          name: 'SalatWidgetSmallProvider',
-          androidName: 'SalatWidgetSmallProvider',
-        );
-        print('Standard widget update result: $resultSmall');
+          final resultSmall = await HomeWidget.updateWidget(
+            name: 'SalatWidgetSmallProvider',
+            androidName: 'SalatWidgetSmallProvider',
+          );
+          debugPrint('Standard widget update result: $resultSmall');
+        }
       }
     }
 
@@ -281,7 +261,7 @@ final notificationSchedulerProvider = Provider((ref) {
                 scheduledDate: dt,
               );
             } catch (e) {
-              print('Error scheduling notification on Linux: $e');
+              debugPrint('Error scheduling notification on Linux: $e');
             }
           }
         }
@@ -330,9 +310,9 @@ final notificationSchedulerProvider = Provider((ref) {
               }
             }
           }
-          print('Successfully pre-scheduled $scheduledCount prayers on Android.');
+          debugPrint('Successfully pre-scheduled $scheduledCount prayers on Android.');
         } catch (e) {
-          print('Error pre-scheduling notifications on Android: $e');
+          debugPrint('Error pre-scheduling notifications on Android: $e');
         }
       }
     }

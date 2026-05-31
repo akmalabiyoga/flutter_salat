@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import '../models/jadwal_model.dart' as legacy;
+import 'package:flutter/foundation.dart';
 import 'database/database.dart';
 import 'bimas_islam_scraper.dart';
 
@@ -153,7 +154,7 @@ class ApiService {
         await db.insertJadwalList(toInsert);
       }
     } catch (e) {
-      print('Error scraping month: $e');
+      debugPrint('Error scraping month: $e');
     }
   }
 

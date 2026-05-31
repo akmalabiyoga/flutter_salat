@@ -159,6 +159,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             TextButton(
               onPressed: () async {
                 await ref.read(databaseProvider).clearDatabase();
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Database cleared. Please restart the app or re-select location.')),
                 );
