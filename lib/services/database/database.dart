@@ -122,10 +122,18 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
+    Directory dbFolder;
+    final snapUserData = Platform.environment['SNAP_USER_DATA'];
+    if (snapUserData != null && snapUserData.isNotEmpty) {
+      dbFolder = Directory(snapUserData);
+    } else {
+      dbFolder = await getApplicationSupportDirectory();
+    }
+    
+    if (!await dbFolder.exists()) {
+      await dbFolder.create(recursive: true);
+    }
     final file = File(p.join(dbFolder.path, 'pysalat.sqlite'));
-
-
 
     return NativeDatabase.createInBackground(file);
   });

@@ -41,14 +41,14 @@ class BimasIslamScraper {
     var response = await http.get(
       Uri.parse(_baseUrl),
       headers: _defaultHeaders,
-    );
+    ).timeout(const Duration(seconds: 10));
     _updateCookies(response);
 
     // Second request - page is fully populated with province <select>
     var headers = Map<String, String>.from(_defaultHeaders);
     if (_cookies.isNotEmpty) headers['Cookie'] = _cookieString;
 
-    response = await http.get(Uri.parse(_baseUrl), headers: headers);
+    response = await http.get(Uri.parse(_baseUrl), headers: headers).timeout(const Duration(seconds: 10));
 
     var document = html_parser.parse(response.body);
     var provSelect = document.getElementById('search_prov');
@@ -81,7 +81,7 @@ class BimasIslamScraper {
       Uri.parse(_kabKotaUrl),
       headers: headers,
       body: {'x': provVal},
-    );
+    ).timeout(const Duration(seconds: 10));
 
     if (response.statusCode != 200) throw Exception('Failed to fetch cities');
 
@@ -117,7 +117,7 @@ class BimasIslamScraper {
       Uri.parse(_jadwalUrl),
       headers: headers,
       body: {'x': provVal, 'y': kabVal, 'bln': bulan, 'thn': tahun},
-    );
+    ).timeout(const Duration(seconds: 10));
 
     if (response.statusCode != 200) throw Exception('Failed to fetch schedule');
 

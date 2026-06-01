@@ -1,6 +1,6 @@
 name: jadwal-salat
 title: Jadwal Salat
-version: '1.0.0'
+version: '1.0.1'
 summary: A simple and beautiful prayer schedule application.
 description: |
   Jadwal Salat is a Flutter-based application that provides accurate 
