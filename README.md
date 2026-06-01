@@ -41,6 +41,16 @@ Aplikasi ini dirancang sederhana namun memiliki fitur yang sangat kaya untuk men
 
 Bagi pengguna yang ingin langsung menggunakan aplikasi tanpa melakukan *build* dari *source code*, Anda dapat mengunduh paket siap pakai langsung dari **[Halaman Rilis / Release Page](https://github.com/akmalabiyoga/flutter_salat/releases)**:
 
+### 🐧 Ubuntu / Linux (Snap Store)
+Anda dapat menginstal aplikasi ini dengan mudah dan aman langsung melalui Snap Store:
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/jadwal-salat)
+
+Atau instal melalui terminal:
+```bash
+sudo snap install jadwal-salat
+```
+
 ### 🤖 Android (.apk)
 Kami menyediakan beberapa opsi berkas `.apk` di Halaman Rilis untuk menyesuaikan dengan kebutuhan perangkat Anda:
 * **`flutter_salat_android_universal.apk`**: Berisi seluruh arsitektur sistem. Pilih berkas ini jika Anda ragu mengenai jenis prosesor ponsel Anda. Ukuran berkas paling besar.
