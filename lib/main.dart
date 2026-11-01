@@ -8,6 +8,7 @@ import 'screens/about_screen.dart';
 import 'services/notification_service.dart';
 import 'services/tray_service.dart';
 import 'providers/theme_provider.dart';
+import 'providers/jadwal_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,7 @@ void main() async {
     await TrayService().init();
 
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(450, 700),
+      size: Size(850, 680),
       center: true,
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
@@ -29,7 +30,7 @@ void main() async {
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.setMinimumSize(const Size(400, 600));
-      await windowManager.setMaximumSize(const Size(700, 1000));
+      await windowManager.setMaximumSize(const Size(2560, 1600));
       await windowManager.setIcon('assets/app_icon.png');
       await windowManager.show();
       await windowManager.focus();
@@ -80,6 +81,9 @@ class _MyAppState extends State<MyApp> with WindowListener {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
+        // Eagerly maintain background notification scheduler lifecycle across the app
+        ref.watch(notificationSchedulerProvider);
+
         final themeMode = ref.watch(themeProvider);
         
         return MaterialApp(

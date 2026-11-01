@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class BimasIslamScraper {
+  final http.Client _client;
+
+  BimasIslamScraper({http.Client? client}) : _client = client ?? http.Client();
+
   static const String _baseUrl = 'https://bimasislam.kemenag.go.id';
   static const String _provinsiUrl = '$_baseUrl/api/sihat/provinsi';
   static const String _kabKotaUrl = '$_baseUrl/api/sihat/kabko';
@@ -16,7 +20,7 @@ class BimasIslamScraper {
 
   /// Fetch the list of provinces from SIHAT API.
   Future<List<Map<String, String>>> fetchCookiesAndProvinces() async {
-    final response = await http
+    final response = await _client
         .get(
           Uri.parse(_provinsiUrl),
           headers: _defaultHeaders,
@@ -49,7 +53,7 @@ class BimasIslamScraper {
   /// Fetch the list of kabupaten/kota for a given province ID.
   Future<List<Map<String, String>>> fetchKabupatenKota(String provVal) async {
     final uri = Uri.parse('$_kabKotaUrl?prov=${Uri.encodeComponent(provVal)}');
-    final response = await http
+    final response = await _client
         .get(
           uri,
           headers: _defaultHeaders,
@@ -86,7 +90,7 @@ class BimasIslamScraper {
       '$_jadwalUrl?prov=${Uri.encodeComponent(provVal)}&kabko=${Uri.encodeComponent(kabVal)}&thn=$tahun&bln=$paddedMonth',
     );
 
-    final response = await http
+    final response = await _client
         .get(
           uri,
           headers: _defaultHeaders,
@@ -98,5 +102,10 @@ class BimasIslamScraper {
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Close the HTTP client when disposing manually.
+  void close() {
+    _client.close();
   }
 }

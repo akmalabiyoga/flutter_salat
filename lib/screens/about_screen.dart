@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({super.key});
+  final bool isEmbedded;
+  const AboutScreen({super.key, this.isEmbedded = false});
 
   static const String _repoUrl = 'https://github.com/akmalabiyoga/flutter_salat';
   static const String _issuesUrl = 'https://github.com/akmalabiyoga/flutter_salat/issues';
@@ -45,12 +46,17 @@ class AboutScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tentang Aplikasi'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        children: [
+      appBar: isEmbedded
+          ? null
+          : AppBar(
+              title: const Text('Tentang Aplikasi'),
+            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 650),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            children: [
           // Header: Icon, Name & Version
           Center(
             child: Column(
@@ -309,7 +315,9 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 16),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
 

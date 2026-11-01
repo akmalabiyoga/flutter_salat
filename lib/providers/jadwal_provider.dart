@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -28,8 +29,20 @@ class SelectedDateNotifier extends Notifier<DateTime> {
 }
 
 
+// Provider for persistent http.Client with connection pooling
+final httpClientProvider = Provider<http.Client>((ref) {
+  final client = http.Client();
+  ref.onDispose(() {
+    client.close();
+  });
+  return client;
+});
+
 // Provider for BimasIslamScraper
-final scraperProvider = Provider((ref) => BimasIslamScraper());
+final scraperProvider = Provider((ref) {
+  final client = ref.watch(httpClientProvider);
+  return BimasIslamScraper(client: client);
+});
 
 // Provider for ApiService
 final apiServiceProvider = Provider((ref) {

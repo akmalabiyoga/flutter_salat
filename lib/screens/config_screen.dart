@@ -6,7 +6,8 @@ import '../services/database/database_provider.dart';
 import '../services/notification_service.dart';
 
 class ConfigScreen extends ConsumerStatefulWidget {
-  const ConfigScreen({super.key});
+  final bool isEmbedded;
+  const ConfigScreen({super.key, this.isEmbedded = false});
 
   @override
   ConsumerState<ConfigScreen> createState() => _ConfigScreenState();
@@ -41,21 +42,26 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     final provincesAsync = ref.watch(provincesProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuration'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'Tentang Aplikasi',
-            onPressed: () => Navigator.pushNamed(context, '/about'),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              title: const Text('Configuration'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.info_outline),
+                  tooltip: 'Tentang Aplikasi',
+                  onPressed: () => Navigator.pushNamed(context, '/about'),
+                ),
+              ],
+            ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             const Text(
               'Select Province:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -161,7 +167,9 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Configuration saved! Fetching schedules...')),
                     );
-                    Navigator.pop(context); // Go back to main screen
+                    if (!widget.isEmbedded) {
+                      Navigator.pop(context); // Go back to main screen
+                    }
                   }
                 },
                 child: const Text('Save Configuration'),
@@ -225,41 +233,45 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.pushNamed(context, '/about'),
-                icon: const Icon(Icons.info_outline),
-                label: const Text('Tentang Aplikasi'),
+            if (!widget.isEmbedded) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/about'),
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('Tentang Aplikasi'),
+                ),
               ),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () async {
-                await NotificationService().showNotification(
-                  id: 999,
-                  title: 'Waktu Dzuhur Tiba',
-                  body: 'Wilayah Kab. Bogor sudah masuk waktu Dzuhur',
-                );
-              },
-              child: const Text('Test Notification Alert'),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () async {
-                await ref.read(databaseProvider).clearDatabase();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Database cleared. Please restart the app or re-select location.')),
-                );
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Reset All Data (Sync Fix)'),
-            ),
-          ],
+            ],
+              const SizedBox(height: 32),
+              TextButton(
+                onPressed: () async {
+                  await NotificationService().showNotification(
+                    id: 999,
+                    title: 'Waktu Dzuhur Tiba',
+                    body: 'Wilayah Kab. Bogor sudah masuk waktu Dzuhur',
+                  );
+                },
+                child: const Text('Test Notification Alert'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () async {
+                  await ref.read(databaseProvider).clearDatabase();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Database cleared. Please restart the app or re-select location.')),
+                  );
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Reset All Data (Sync Fix)'),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
