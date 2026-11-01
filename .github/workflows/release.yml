@@ -87,8 +87,32 @@ jobs:
             flutter_salat_android_arm64-v8a.apk
             flutter_salat_android_x86_64.apk
 
+  build-snap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Snap Package
+        uses: snapcore/action-build@v1
+        id: snapcraft
+
+      - name: Upload Snap Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-build
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+      - name: Publish to Snap Store
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        if: ${{ env.SNAPCRAFT_STORE_CREDENTIALS != '' }}
+        with:
+          snap: ${{ steps.snapcraft.outputs.snap }}
+          release: stable
+
   release:
-    needs: [build-linux, build-android]
+    needs: [build-linux, build-android, build-snap]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -103,6 +127,11 @@ jobs:
         with:
           name: android-build
 
+      - name: Download Snap Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap-build
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -112,5 +141,6 @@ jobs:
             flutter_salat_android_armeabi-v7a.apk
             flutter_salat_android_arm64-v8a.apk
             flutter_salat_android_x86_64.apk
+            *.snap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
