@@ -12,7 +12,13 @@ class ApiService {
 
   Future<void> ensureProvincesLoaded() async {
     final provinces = await db.getAllProvinces();
-    if (provinces.isEmpty) {
+    // Invalidate old legacy database records if IDs are in the old format (< 30 chars)
+    if (provinces.isNotEmpty && provinces.first.id.length < 30) {
+      await db.clearDatabase();
+    }
+
+    final currentProvinces = await db.getAllProvinces();
+    if (currentProvinces.isEmpty) {
       final fetched = await scraper.fetchCookiesAndProvinces();
       final entries = fetched
           .map(

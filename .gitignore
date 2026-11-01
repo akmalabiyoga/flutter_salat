@@ -48,3 +48,5 @@ app.*.map.json
 *.snap
 .snapcraft/
 .cache/snapcraft/
+# Widget Preview related
+.widget_preview/

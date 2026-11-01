@@ -1,101 +1,77 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as html_parser;
 
 class BimasIslamScraper {
-  static const String _baseUrl =
-      'https://bimasislam.kemenag.go.id/jadwalshalat';
-  static const String _kabKotaUrl =
-      'https://bimasislam.kemenag.go.id/ajax/getKabkoshalat';
-  static const String _jadwalUrl =
-      'https://bimasislam.kemenag.go.id/ajax/getShalatbln';
+  static const String _baseUrl = 'https://bimasislam.kemenag.go.id';
+  static const String _provinsiUrl = '$_baseUrl/api/sihat/provinsi';
+  static const String _kabKotaUrl = '$_baseUrl/api/sihat/kabko';
+  static const String _jadwalUrl = '$_baseUrl/api/sihat/jadwal';
 
   static const Map<String, String> _defaultHeaders = {
+    'Accept': 'application/json',
+    'Referer': 'https://bimasislam.kemenag.go.id/jadwal-sholat',
     'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
   };
 
-  final Map<String, String> _cookies = {};
-
-  String get _cookieString {
-    return _cookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
-  }
-
-  void _updateCookies(http.Response response) {
-    String? rawCookie = response.headers['set-cookie'];
-    if (rawCookie != null) {
-      int index = rawCookie.indexOf(';');
-      String cookieStr = (index == -1)
-          ? rawCookie
-          : rawCookie.substring(0, index);
-      var parts = cookieStr.split('=');
-      if (parts.length == 2) {
-        _cookies[parts[0]] = parts[1];
-      }
-    }
-  }
-
-  /// Perform the two-request handshake to obtain cookies and province list.
+  /// Fetch the list of provinces from SIHAT API.
   Future<List<Map<String, String>>> fetchCookiesAndProvinces() async {
-    // First request - grab session cookies
-    var response = await http.get(
-      Uri.parse(_baseUrl),
-      headers: _defaultHeaders,
-    ).timeout(const Duration(seconds: 10));
-    _updateCookies(response);
+    final response = await http
+        .get(
+          Uri.parse(_provinsiUrl),
+          headers: _defaultHeaders,
+        )
+        .timeout(const Duration(seconds: 15));
 
-    // Second request - page is fully populated with province <select>
-    var headers = Map<String, String>.from(_defaultHeaders);
-    if (_cookies.isNotEmpty) headers['Cookie'] = _cookieString;
-
-    response = await http.get(Uri.parse(_baseUrl), headers: headers).timeout(const Duration(seconds: 10));
-
-    var document = html_parser.parse(response.body);
-    var provSelect = document.getElementById('search_prov');
-
-    List<Map<String, String>> provinces = [];
-    if (provSelect != null) {
-      for (var option in provSelect.querySelectorAll('option')) {
-        String val = option.attributes['value'] ?? '';
-        String text = option.text.trim();
-        if (val.isNotEmpty) {
-          // skip placeholder
-          provinces.add({'value': val, 'text': text});
-        }
-      }
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch provinces: HTTP ${response.statusCode}');
     }
-    return provinces;
+
+    final decoded = jsonDecode(response.body);
+    final List<dynamic> data = decoded['data'] as List<dynamic>? ?? [];
+
+    return data.map((item) {
+      final id = item['id']?.toString() ?? '';
+      final name = item['name']?.toString() ?? '';
+      return {
+        'value': id,
+        'text': name,
+        'id': id,
+        'name': name,
+      };
+    }).toList();
   }
 
-  /// Fetch the list of kabupaten/kota for a given province value.
+  /// Alias for fetchCookiesAndProvinces for cleaner naming
+  Future<List<Map<String, String>>> fetchProvinces() =>
+      fetchCookiesAndProvinces();
+
+  /// Fetch the list of kabupaten/kota for a given province ID.
   Future<List<Map<String, String>>> fetchKabupatenKota(String provVal) async {
-    if (_cookies.isEmpty) {
-      await fetchCookiesAndProvinces();
+    final uri = Uri.parse('$_kabKotaUrl?prov=${Uri.encodeComponent(provVal)}');
+    final response = await http
+        .get(
+          uri,
+          headers: _defaultHeaders,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch cities: HTTP ${response.statusCode}');
     }
 
-    var headers = Map<String, String>.from(_defaultHeaders);
-    headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    if (_cookies.isNotEmpty) headers['Cookie'] = _cookieString;
+    final decoded = jsonDecode(response.body);
+    final List<dynamic> data = decoded['data'] as List<dynamic>? ?? [];
 
-    var response = await http.post(
-      Uri.parse(_kabKotaUrl),
-      headers: headers,
-      body: {'x': provVal},
-    ).timeout(const Duration(seconds: 10));
-
-    if (response.statusCode != 200) throw Exception('Failed to fetch cities');
-
-    var document = html_parser.parse(response.body);
-    List<Map<String, String>> cities = [];
-
-    for (var option in document.querySelectorAll('option')) {
-      String val = option.attributes['value'] ?? '';
-      String text = option.text.trim();
-      if (val.isNotEmpty) {
-        cities.add({'value': val, 'name': text});
-      }
-    }
-    return cities;
+    return data.map((item) {
+      final id = item['id']?.toString() ?? '';
+      final name = item['name']?.toString() ?? '';
+      return {
+        'value': id,
+        'name': name,
+        'id': id,
+      };
+    }).toList();
   }
 
   /// Fetch the monthly prayer schedule for a given location.
@@ -105,22 +81,22 @@ class BimasIslamScraper {
     String bulan,
     String tahun,
   ) async {
-    if (_cookies.isEmpty) {
-      await fetchCookiesAndProvinces();
+    final paddedMonth = bulan.padLeft(2, '0');
+    final uri = Uri.parse(
+      '$_jadwalUrl?prov=${Uri.encodeComponent(provVal)}&kabko=${Uri.encodeComponent(kabVal)}&thn=$tahun&bln=$paddedMonth',
+    );
+
+    final response = await http
+        .get(
+          uri,
+          headers: _defaultHeaders,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch schedule: HTTP ${response.statusCode}');
     }
 
-    var headers = Map<String, String>.from(_defaultHeaders);
-    headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    if (_cookies.isNotEmpty) headers['Cookie'] = _cookieString;
-
-    var response = await http.post(
-      Uri.parse(_jadwalUrl),
-      headers: headers,
-      body: {'x': provVal, 'y': kabVal, 'bln': bulan, 'thn': tahun},
-    ).timeout(const Duration(seconds: 10));
-
-    if (response.statusCode != 200) throw Exception('Failed to fetch schedule');
-
-    return jsonDecode(response.body);
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }
