@@ -17,10 +17,28 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
   String? selectedCityId;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final cityId = ref.read(cityIdProvider).value ?? '';
+      if (cityId.isNotEmpty && mounted) {
+        final db = ref.read(databaseProvider);
+        final city = await (db.select(db.cities)
+              ..where((t) => t.id.equals(cityId)))
+            .getSingleOrNull();
+        if (city != null && mounted) {
+          setState(() {
+            selectedProvinceId = city.provinceId;
+            selectedCityId = city.id;
+          });
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final provincesAsync = ref.watch(provincesProvider);
-    final cityIdAsync = ref.watch(cityIdProvider);
-    final currentCityId = cityIdAsync.value ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -150,7 +168,63 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text("Currently Selected City ID: ${currentCityId.isEmpty ? 'None' : currentCityId}"),
+            Consumer(
+              builder: (context, ref, child) {
+                final locationAsync = ref.watch(selectedLocationProvider);
+                final theme = Theme.of(context);
+                final colorScheme = theme.colorScheme;
+
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on, color: colorScheme.primary, size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Lokasi Terpilih Saat Ini:',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            locationAsync.when(
+                              data: (loc) => Text(
+                                loc != null
+                                    ? '${loc.cityName}, ${loc.provinceName}'
+                                    : 'Belum ada lokasi yang dipilih',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              loading: () => Text(
+                                'Memuat info lokasi...',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              error: (_, __) => Text(
+                                'Tidak dapat memuat info lokasi',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

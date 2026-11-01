@@ -58,6 +58,35 @@ class CityIdNotifier extends AsyncNotifier<String> {
   }
 }
 
+class LocationInfo {
+  final String cityName;
+  final String provinceName;
+
+  const LocationInfo({required this.cityName, required this.provinceName});
+}
+
+// Provider to get human-readable location details for currently selected city
+final selectedLocationProvider =
+    FutureProvider.autoDispose<LocationInfo?>((ref) async {
+  final cityId = await ref.watch(cityIdProvider.future);
+  if (cityId.isEmpty) return null;
+
+  final db = ref.watch(databaseProvider);
+  final city = await (db.select(db.cities)
+        ..where((t) => t.id.equals(cityId)))
+      .getSingleOrNull();
+  if (city == null) return null;
+
+  final prov = await (db.select(db.provinces)
+        ..where((t) => t.id.equals(city.provinceId)))
+      .getSingleOrNull();
+
+  return LocationInfo(
+    cityName: city.name,
+    provinceName: prov?.name ?? '',
+  );
+});
+
 // FutureProvider to fetch Jadwal based on current selected city and current date
 final jadwalFutureProvider = FutureProvider.autoDispose<JadwalResponse>((
   ref,
