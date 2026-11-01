@@ -216,6 +216,15 @@ final notificationSchedulerProvider = Provider((ref) {
       }
     }
 
+    String formatLocationName(String name) {
+      if (name.isEmpty) return name;
+      return name
+          .toLowerCase()
+          .split(' ')
+          .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+          .join(' ');
+    }
+
     Future<void> scheduleNext() async {
       final now = DateTime.now();
       final todayStr = DateFormat('yyyy-MM-dd').format(now);
@@ -253,11 +262,12 @@ final notificationSchedulerProvider = Provider((ref) {
           final dt = DateTime.tryParse(nextPrayer.prayerTime);
           if (dt != null) {
             try {
+              final formattedCity = formatLocationName(nextPrayer.kabupatenKotaName);
               await service.cancelAll();
               await service.scheduleNotification(
                 id: 0, // ID 0 for the single dynamic Linux timer
-                title: 'Waktunya Sholat ${nextPrayer.prayerName}',
-                body: 'Waktunya sholat ${nextPrayer.prayerName} untuk wilayah ${nextPrayer.kabupatenKotaName}',
+                title: 'Waktu ${nextPrayer.prayerName} Tiba',
+                body: 'Wilayah $formattedCity sudah masuk waktu ${nextPrayer.prayerName}',
                 scheduledDate: dt,
               );
             } catch (e) {
@@ -299,11 +309,12 @@ final notificationSchedulerProvider = Provider((ref) {
               if (dt != null && dt.isAfter(now)) {
                 final idx = prayerIndices[prayer.prayerName] ?? 9;
                 final notificationId = dateInt * 10 + idx;
+                final formattedCity = formatLocationName(prayer.kabupatenKotaName);
 
                 await service.scheduleNotification(
                   id: notificationId,
-                  title: 'Waktunya Sholat ${prayer.prayerName}',
-                  body: 'Waktunya sholat ${prayer.prayerName} untuk wilayah ${prayer.kabupatenKotaName}',
+                  title: 'Waktu ${prayer.prayerName} Tiba',
+                  body: 'Wilayah $formattedCity sudah masuk waktu ${prayer.prayerName}',
                   scheduledDate: dt,
                 );
                 scheduledCount++;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'screens/jadwal_screen.dart';
 import 'screens/config_screen.dart';
+import 'screens/about_screen.dart';
 import 'services/notification_service.dart';
 import 'services/tray_service.dart';
 import 'providers/theme_provider.dart';
@@ -112,6 +113,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
           routes: {
             '/': (context) => const JadwalScreen(),
             '/config': (context) => const ConfigScreen(),
+            '/about': (context) => const AboutScreen(),
           },
         );
       },

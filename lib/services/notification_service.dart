@@ -19,6 +19,18 @@ class NotificationService {
 
   Future<void> init() async {
     tz.initializeTimeZones();
+    try {
+      final offset = DateTime.now().timeZoneOffset;
+      if (offset.inHours == 8) {
+        tz.setLocalLocation(tz.getLocation('Asia/Makassar'));
+      } else if (offset.inHours == 9) {
+        tz.setLocalLocation(tz.getLocation('Asia/Jayapura'));
+      } else {
+        tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
+      }
+    } catch (e) {
+      debugPrint('Error setting local timezone location: $e');
+    }
     
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/launcher_icon');

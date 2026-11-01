@@ -25,6 +25,13 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configuration'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Tentang Aplikasi',
+            onPressed: () => Navigator.pushNamed(context, '/about'),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -82,7 +89,7 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
                       },
                     ),
                     loading: () => const CircularProgressIndicator(),
-                    error: (e, s) => Text('Error: \$e'),
+                    error: (e, s) => Text('Error: $e'),
                   );
                 },
               ),
@@ -144,13 +151,22 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
             ),
             const SizedBox(height: 24),
             Text("Currently Selected City ID: ${currentCityId.isEmpty ? 'None' : currentCityId}"),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/about'),
+                icon: const Icon(Icons.info_outline),
+                label: const Text('Tentang Aplikasi'),
+              ),
+            ),
             const Spacer(),
             TextButton(
               onPressed: () async {
                 await NotificationService().showNotification(
                   id: 999,
-                  title: 'Test Notification',
-                  body: 'This is a test notification from Flutter Salat.',
+                  title: 'Waktu Dzuhur Tiba',
+                  body: 'Wilayah Kab. Bogor sudah masuk waktu Dzuhur',
                 );
               },
               child: const Text('Test Notification Alert'),
